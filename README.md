@@ -18,7 +18,7 @@ Wrapper that provides helper functions which help you include QR-code reading fu
 ## Demo
 https://user-images.githubusercontent.com/8118918/162677144-e592fc47-a18c-4be8-a586-2cfd7d14d906.mp4
 
-## Usage
+## Install
 
 In app-level `build.gradle`
 ```gradle
@@ -39,8 +39,33 @@ dependencies {
 ```
 where `XXXXX` is [![](https://jitpack.io/v/mumayank/airqr.svg)](https://jitpack.io/#mumayank/airqr)
 
+To add a previewView in your layout
+
+#### Option 1: Jetpack Compose
+
+```kotlin
+PreviewView(context).apply {
+    setBackgroundColor(Color.GREEN)
+    layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
+    scaleType = PreviewView.ScaleType.FILL_START
+    implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+    post {
+        cameraProviderFuture.addListener(Runnable {
+            val cameraProvider = cameraProviderFuture.get()
+            bindPreview(
+                cameraProvider,
+                lifecycleOwner,
+                this,
+            )
+        }, ContextCompat.getMainExecutor(context))
+    }
+}
+```
+
+#### Option 2: Add view in xml
 
 In your layout file `xml`
+
 ```xml
 <androidx.constraintlayout.widget.ConstraintLayout>
     .
@@ -57,6 +82,8 @@ In your layout file `xml`
     .
 </androidx.constraintlayout.widget.ConstraintLayout>
 ```
+
+## Use
 
 Call the helper methods in your activity:
 ```kotlin
