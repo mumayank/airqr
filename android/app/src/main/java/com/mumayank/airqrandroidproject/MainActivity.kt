@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.mumayank.airqr.AirQr
+import com.mumayank.airqr.helpers.BitmapHelper
 import com.mumayank.airqrandroidproject.databinding.ActivityMainBinding
 
 @androidx.camera.core.ExperimentalGetImage
@@ -17,6 +18,24 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        BitmapHelper.getBitmapFromAsset(
+            this,
+            "kasper.png",
+            onSuccess = {
+                AirQr.analyzeBitmap(
+                    it,
+                    onDetection = { string ->
+                        Toast.makeText(this, string, Toast.LENGTH_LONG).show()
+                    },
+                    onError = { error ->
+                        Toast.makeText(this, error, Toast.LENGTH_LONG).show()
+                    }
+                )
+            }, onFailure = {
+                Toast.makeText(this, "Failed", Toast.LENGTH_LONG).show()
+            }
+        )
 
         with(binding) {
             airQr = AirQr()

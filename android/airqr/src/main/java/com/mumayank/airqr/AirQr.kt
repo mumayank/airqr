@@ -1,6 +1,7 @@
 package com.mumayank.airqr
 
 import android.content.Context
+import android.graphics.Bitmap
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.view.PreviewView
 import com.mumayank.airqr.helpers.BarcodeScannerHelper
@@ -9,6 +10,28 @@ import com.mumayank.airqr.helpers.PermissionsHelper
 
 @androidx.camera.core.ExperimentalGetImage
 class AirQr {
+
+    companion object {
+        fun analyzeBitmap(
+            bitmap: Bitmap?,
+            onDetection: ((String) -> Unit)? = null,
+            onError: ((String) -> Unit)? = null
+        ) {
+            try {
+                BarcodeScannerHelper.analyze(
+                    bitmap,
+                    onError = { error ->
+                        onError?.invoke(error)
+                    },
+                    onDetection = { string ->
+                        onDetection?.invoke(string)
+                    }
+                )
+            } catch (e: Exception) {
+                onError?.invoke(e.message ?: "")
+            }
+        }
+    }
 
     private var cameraXHelper: CameraXHelper? = null
     private var previewView: PreviewView? = null
