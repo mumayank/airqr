@@ -13,6 +13,7 @@ Wrapper that provides helper functions which help you include QR-code reading fu
 - Provides additional optional callback methods so that devs can take care of the flow `on error`, `exception`, `permission denied`, etc. as per their app flow.
 - Covers `releasing` camera resources properly `onPause()`, reclaiming them `onResume()`, closing `proxyImage` when detection is done. Takes care of backpressure.
 - Uses `Jetpack's CameraX library` and `Google's ML Kit` internally - so you're in safe hands!
+- Bonus: Provides a static helper method to detect QR code from Bitmap
 
 ## Demo
 https://user-images.githubusercontent.com/8118918/162677144-e592fc47-a18c-4be8-a586-2cfd7d14d906.mp4
@@ -151,8 +152,35 @@ class MainActivity : AppCompatActivity() {
 
 }
 ```
-That's all :)
 
-p.s. In case you face issues, or have suggestions, feel free to use the "issues" tab. Maybe the issue is already addressed
+## Bonus
 
-And of course, PRs are welcomed. Feel free to contribute and make the project better :)
+The library offers a static helper function to analyze any bitmap for QR code:
+
+```kotlin
+AirQr.analyzeBitmap(
+    bitmap,
+    onDetection = { string ->
+        Toast.makeText(this, string, Toast.LENGTH_LONG).show()
+    },
+    onError = { error ->
+        Toast.makeText(this, error, Toast.LENGTH_LONG).show()
+    }
+)
+```
+
+Additionally, the library also offers another static helper function to get bitmap from image file in project's assets folder:
+
+```kotlin
+BitmapHelper.getBitmapFromAsset(
+    appCompatActivity,
+    "image.png",  // image file name with extension
+    onSuccess = { bitmap ->
+        // use the bitmap in the above function to analyze it
+    }, onFailure = {
+        Toast.makeText(this, "Failed", Toast.LENGTH_LONG).show()
+    }
+)
+```
+
+That's all! In case you face issues, or have suggestions, feel free to use the [issues](https://github.com/mumayank/airqr/issues) tab. Maybe the issue is already addressed. And of course, PRs are welcomed. Feel free to contribute and make the project better :)
