@@ -13,7 +13,6 @@ Wrapper that provides helper functions which help you include QR-code reading fu
 - Provides additional optional callback methods so that devs can take care of the flow `on error`, `exception`, `permission denied`, etc. as per their app flow.
 - Covers `releasing` camera resources properly `onPause()`, reclaiming them `onResume()`, closing `proxyImage` when detection is done. Takes care of backpressure.
 - Uses `Jetpack's CameraX library` and `Google's ML Kit` internally - so you're in safe hands!
-- Provides `source files` instead of packaging as a library - so that devs are in full control.
 
 ## Demo
 https://user-images.githubusercontent.com/8118918/162677144-e592fc47-a18c-4be8-a586-2cfd7d14d906.mp4
