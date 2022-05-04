@@ -155,7 +155,7 @@ class MainActivity : AppCompatActivity() {
 
 ## Bonus
 
-The library offers a static helper function to analyze any bitmap for QR code. 
+The library offers a static helper function to analyze any bitmap for QR code:
 
 ```kotlin
 AirQr.analyzeBitmap(
@@ -169,7 +169,7 @@ AirQr.analyzeBitmap(
 )
 ```
 
-Additionally, the library also offers another static helper function to get bitmap from image file in project's assets folder.
+Additionally, the library also offers another static helper function to get bitmap from image file in project's assets folder:
 
 ```kotlin
 BitmapHelper.getBitmapFromAsset(
