@@ -20,6 +20,16 @@ https://user-images.githubusercontent.com/8118918/162677144-e592fc47-a18c-4be8-a
 
 ## Install
 
+In project-level `build.gradle`
+```gradle
+    allprojects {
+      repositories {
+        ...
+        maven { url 'https://jitpack.io' }
+      }
+    }
+```
+
 In app-level `build.gradle`
 ```gradle
 android {
