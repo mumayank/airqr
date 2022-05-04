@@ -22,12 +22,12 @@ https://user-images.githubusercontent.com/8118918/162677144-e592fc47-a18c-4be8-a
 
 In project-level `build.gradle`
 ```gradle
-    allprojects {
-      repositories {
-        ...
-        maven { url 'https://jitpack.io' }
-      }
-    }
+allprojects {
+  repositories {
+    ...
+    maven { url 'https://jitpack.io' }
+  }
+}
 ```
 
 In app-level `build.gradle`
@@ -106,30 +106,29 @@ class MainActivity : AppCompatActivity() {
         .
         .
         airQr = AirQr()
-        airQr?.let {
-                it.onCreate(
-                    appCompatActivity = this@MainActivity,
-                    previewView = previewView,
-                    isFlashHardwareDetected = { isDetected ->
-                        // do something
-                    },
-                    onFlashStateChanged = {
-                        // do something
-                    },
-                    onDetection = { string ->
-                        // do something, return true if this is the QR code you wanted, else return false to continue scanning
-                    },
-                    onError = { errorString ->
-                        // can ignore as this does not stop the lib from analyzing the next frame
-                    },
-                    onPermissionsNotGranted = {
-                        // do something
-                    },
-                    onException = {
-                        // cannot proceed due to camera/ google ML issue. Do something
-                    }
-                )
-            }
+        airQr?.onCreate(
+                appCompatActivity = this@MainActivity,
+                previewView = previewView,
+                isFlashHardwareDetected = { isDetected ->
+                    // do something
+                },
+                onFlashStateChanged = {
+                    // do something
+                },
+                onDetection = { string ->
+                    // do something, return true if this is the QR code you wanted, else return false to continue scanning
+                },
+                onError = { errorString ->
+                    // can ignore as this does not stop the lib from analyzing the next frame
+                },
+                onPermissionsNotGranted = {
+                    // do something
+                },
+                onException = {
+                    // cannot proceed due to camera/ google ML issue. Do something
+                }
+            )
+        }
     }
 
     override fun onRequestPermissionsResult(
