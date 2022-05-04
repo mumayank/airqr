@@ -155,22 +155,28 @@ class MainActivity : AppCompatActivity() {
 
 ## Bonus
 
-The library offers a static helper function to analyze any bitmap for QR code. Additionally, it also offers another static helper function to get bitmap from image file in project's assets folder.
+The library offers a static helper function to analyze any bitmap for QR code. 
+
+```kotlin
+AirQr.analyzeBitmap(
+    bitmap,
+    onDetection = { string ->
+        Toast.makeText(this, string, Toast.LENGTH_LONG).show()
+    },
+    onError = { error ->
+        Toast.makeText(this, error, Toast.LENGTH_LONG).show()
+    }
+)
+```
+
+Additionally, the library also offers another static helper function to get bitmap from image file in project's assets folder.
 
 ```kotlin
 BitmapHelper.getBitmapFromAsset(
     appCompatActivity,
     "image.png",  // image file name with extension
     onSuccess = { bitmap ->
-        AirQr.analyzeBitmap(
-            bitmap,
-            onDetection = { string ->
-                Toast.makeText(this, string, Toast.LENGTH_LONG).show()
-            },
-            onError = { error ->
-                Toast.makeText(this, error, Toast.LENGTH_LONG).show()
-            }
-        )
+        // use the bitmap in the above function to analyze it
     }, onFailure = {
         Toast.makeText(this, "Failed", Toast.LENGTH_LONG).show()
     }
