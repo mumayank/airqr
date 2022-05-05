@@ -183,4 +183,18 @@ BitmapHelper.getBitmapFromAsset(
 )
 ```
 
+The library also provides a static helper function to help choose images from user's device (using explorer app/ other photos app installed on user's device)
+
+```kotlin
+BitmapHelper.getBitmapFromGallery(
+    this,
+    onSuccess = {
+        // use the bitmap in the above airqr function to analyze it
+    },
+    onFailure = {
+        Toast.makeText(this, it, Toast.LENGTH_LONG).show()
+    }
+)
+```
+
 That's all! In case you face issues, or have suggestions, feel free to use the [issues](https://github.com/mumayank/airqr/issues) tab. Maybe the issue is already addressed. And of course, PRs are welcomed. Feel free to contribute and make the project better :)
