@@ -19,6 +19,24 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        BitmapHelper.getBitmapFromGallery(
+            this,
+            onSuccess = {
+                AirQr.analyzeBitmap(
+                    it,
+                    onDetection = { string ->
+                        Toast.makeText(this, string, Toast.LENGTH_LONG).show()
+                    },
+                    onError = { error ->
+                        Toast.makeText(this, error, Toast.LENGTH_LONG).show()
+                    }
+                )
+            },
+            onFailure = {
+                Toast.makeText(this, it, Toast.LENGTH_LONG).show()
+            }
+        )
+
         BitmapHelper.getBitmapFromAsset(
             this,
             "kasper.png",
