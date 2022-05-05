@@ -197,4 +197,6 @@ BitmapHelper.getBitmapFromGallery(
 )
 ```
 
+Please do checkout the [wiki](https://github.com/mumayank/airqr/wiki) too!
+
 That's all! In case you face issues, or have suggestions, feel free to use the [issues](https://github.com/mumayank/airqr/issues) tab. Maybe the issue is already addressed. And of course, PRs are welcomed. Feel free to contribute and make the project better :)
