@@ -105,30 +105,32 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         .
         .
-        airQr = AirQr()
-        airQr?.onCreate(
-                appCompatActivity = this@MainActivity,
-                previewView = previewView,
-                isFlashHardwareDetected = { isDetected ->
-                    // do something
-                },
-                onFlashStateChanged = {
-                    // do something
-                },
-                onDetection = { string ->
-                    // do something, return true if this is the QR code you wanted, else return false to continue scanning
-                },
-                onError = { errorString ->
-                    // can ignore as this does not stop the lib from analyzing the next frame
-                },
-                onPermissionsNotGranted = {
-                    // do something
-                },
-                onException = {
-                    // cannot proceed due to camera/ google ML issue. Do something
+        airQr = AirQr.Builder()
+                .withAppCompatActivity(this)
+                .withPreviewView(binding.previewView)
+                .onQrCodeDetected { string ->
+                    // qr code is successfully detected containing string
+                    // analyse the string and return true if this is the correct qr
+                    // else return false to continue scanning
                 }
-            )
-        }
+                .onIsFlashHardwareDetected { isDetected ->
+                    // optional - informs if flash hardware is present in the device - can show/hide flash icons on the screen
+                }
+                .onFlashStateChanged {
+                    // optional - flash state has changed from on to off, can do something like changing the icon
+                }
+                .onError {
+                    // optional
+                    // can ignore as this does not stop the lib from analyzing the next frame
+                }
+                .onPermissionsNotGranted {
+                    // cannot proceed further due to permissions not provided. show some error to the user
+                }
+                .onException {
+                    // some exception happened at google vision API level, cannot proceed further. show some error to the user
+                }
+                .build()
+                .startScan() // you can also stop at build() to get airQr instance, and later use startScan() to begin scanning - depending on your app flow
     }
 
     override fun onRequestPermissionsResult(
@@ -161,10 +163,10 @@ The library offers a static helper function to analyze any bitmap for QR code:
 AirQr.analyzeBitmap(
     bitmap,
     onDetection = { string ->
-        Toast.makeText(this, string, Toast.LENGTH_LONG).show()
+        // qr code is successfully detected containing string
     },
-    onError = { error ->
-        Toast.makeText(this, error, Toast.LENGTH_LONG).show()
+    onError = { errorString ->
+        // show some error to the user
     }
 )
 ```
@@ -177,8 +179,8 @@ BitmapHelper.getBitmapFromAsset(
     "image.png",  // image file name with extension
     onSuccess = { bitmap ->
         // use the bitmap in the above function to analyze it
-    }, onFailure = {
-        Toast.makeText(this, "Failed", Toast.LENGTH_LONG).show()
+    }, onFailure = { errorString ->
+        // show some error to the user
     }
 )
 ```
@@ -188,11 +190,11 @@ The library also provides a static helper function to help choose images from us
 ```kotlin
 BitmapHelper.getBitmapFromGallery(
     this,
-    onSuccess = {
+    onSuccess = { bitmap ->
         // use the bitmap in the above airqr function to analyze it
     },
-    onFailure = {
-        Toast.makeText(this, it, Toast.LENGTH_LONG).show()
+    onFailure = { errorString ->
+        // show some error to the user
     }
 )
 ```
