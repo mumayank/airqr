@@ -25,7 +25,7 @@ In project-level `build.gradle`
 allprojects {
   repositories {
     ...
-    maven { url 'https://jitpack.io' }
+    maven { url 'https://jitpack.io' } // ADD THIS
   }
 }
 ```
@@ -35,19 +35,22 @@ In app-level `build.gradle`
 android {
     .
     .
+    // ADD THESE
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 dependencies {
-    def camerax_version = "1.1.0-beta03"
-    implementation "androidx.camera:camera-core:${camerax_version}"
-    implementation "androidx.camera:camera-view:${camerax_version}"
-    implementation "com.github.mumayank:airqr:XXXXX"
+    // ADD THESE
+    implementation "androidx.camera:camera-core:CAMERA_X_CORE_VERSOIN"
+    implementation "androidx.camera:camera-view:CAMERA_X_VIEW_VERSOIN"
+    implementation "com.github.mumayank:airqr:AIR_QR_VERSION"
 }
 ```
-where `XXXXX` is [![](https://jitpack.io/v/mumayank/airqr.svg)](https://jitpack.io/#mumayank/airqr)
+where `CAMERA_X_CORE_VERSOIN` and `CAMERA_X_VIEW_VERSOIN` can be found [here](https://developer.android.com/jetpack/androidx/releases/camera)
+
+and `AIR_QR_VERSION` is [![](https://jitpack.io/v/mumayank/airqr.svg)](https://jitpack.io/#mumayank/airqr)
 
 To add a previewView in your layout
 
@@ -80,6 +83,7 @@ In your layout file `xml`
 <androidx.constraintlayout.widget.ConstraintLayout>
     .
     .
+    <!-- ADD BELOW -->
     <androidx.camera.view.PreviewView
         android:id="@+id/previewView"
         android:layout_width="match_parent"
@@ -100,35 +104,38 @@ Call the helper methods in your activity:
 @androidx.camera.core.ExperimentalGetImage
 class MainActivity : AppCompatActivity() {
 
-    private var airQr: AirQr? = null
-
+    private var airQr: AirQr? = null                                            // ADD THIS
+  
     override fun onCreate(savedInstanceState: Bundle?) {
         .
         .
-        airQr = AirQr()
-        airQr?.onCreate(
-                appCompatActivity = this@MainActivity,
-                previewView = previewView,
-                isFlashHardwareDetected = { isDetected ->
-                    // do something
-                },
-                onFlashStateChanged = {
-                    // do something
-                },
-                onDetection = { string ->
-                    // do something, return true if this is the QR code you wanted, else return false to continue scanning
-                },
-                onError = { errorString ->
-                    // can ignore as this does not stop the lib from analyzing the next frame
-                },
-                onPermissionsNotGranted = {
-                    // do something
-                },
-                onException = {
-                    // cannot proceed due to camera/ google ML issue. Do something
+        // ADD THIS
+        airQr = AirQr.Builder()
+                .withAppCompatActivity(this)
+                .withPreviewView(binding.previewView)
+                .onQrCodeDetected { string ->
+                    // qr code is successfully detected containing string
+                    // analyse the string and return true if this is the correct qr
+                    // else return false to continue scanning
                 }
-            )
-        }
+                .onIsFlashHardwareDetected { isDetected ->
+                    // optional - informs if flash hardware is present in the device - can show/hide flash icons on the screen
+                }
+                .onFlashStateChanged {
+                    // optional - flash state has changed from on to off, can do something like changing the icon
+                }
+                .onError {
+                    // optional
+                    // can ignore as this does not stop the lib from analyzing the next frame
+                }
+                .onPermissionsNotGranted {
+                    // cannot proceed further due to permissions not provided. show some error to the user
+                }
+                .onException {
+                    // some exception happened at google vision API level, cannot proceed further. show some error to the user
+                }
+                .build()
+                .startScan() // you can also stop at build() to get airQr instance, and later use startScan() to begin scanning - depending on your app flow
     }
 
     override fun onRequestPermissionsResult(
@@ -137,16 +144,16 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        airQr?.onRequestPermissionsResult(this, requestCode)
+        airQr?.onRequestPermissionsResult(this, requestCode)                    // ADD THIS
     }
 
     override fun onResume() {
         super.onResume()
-        airQr?.onResume(this)
+        airQr?.onResume(this)                                                   // ADD THIS
     }
 
     override fun onPause() {
-        airQr?.onPause()
+        airQr?.onPause()                                                        // ADD THIS
         super.onPause()
     }
 
@@ -161,10 +168,10 @@ The library offers a static helper function to analyze any bitmap for QR code:
 AirQr.analyzeBitmap(
     bitmap,
     onDetection = { string ->
-        Toast.makeText(this, string, Toast.LENGTH_LONG).show()
+        // qr code is successfully detected containing string
     },
-    onError = { error ->
-        Toast.makeText(this, error, Toast.LENGTH_LONG).show()
+    onError = { errorString ->
+        // show some error to the user
     }
 )
 ```
@@ -177,8 +184,9 @@ BitmapHelper.getBitmapFromAsset(
     "image.png",  // image file name with extension
     onSuccess = { bitmap ->
         // use the bitmap in the above function to analyze it
-    }, onFailure = {
-        Toast.makeText(this, "Failed", Toast.LENGTH_LONG).show()
+    }, 
+    onFailure = { errorString ->
+        // show some error to the user
     }
 )
 ```
@@ -188,11 +196,11 @@ The library also provides a static helper function to help choose images from us
 ```kotlin
 BitmapHelper.getBitmapFromGallery(
     this,
-    onSuccess = {
+    onSuccess = { bitmap ->
         // use the bitmap in the above airqr function to analyze it
     },
-    onFailure = {
-        Toast.makeText(this, it, Toast.LENGTH_LONG).show()
+    onFailure = { errorString ->
+        // show some error to the user
     }
 )
 ```

@@ -56,80 +56,94 @@ class MainActivity : AppCompatActivity() {
         )
 
         with(binding) {
-            airQr = AirQr()
-            airQr?.let {
-                it.onCreate(
-                    appCompatActivity = this@MainActivity,
-                    previewView = previewView,
-                    isFlashHardwareDetected = { isDetected ->
-                        if (isDetected) {
-                            View.VISIBLE.let { visible ->
-                                flashOn.visibility = visible
-                                flashOff.visibility = visible
-                            }
-                            flashOn.setOnClickListener { _ ->
-                                it.changeFlashState(false)
+            airQr = AirQr.Builder()
+                .withAppCompatActivity(this@MainActivity)
+                .withPreviewView(binding.previewView)
+                .onIsFlashHardwareDetected { isDetected ->
+                    if (isDetected) {
+                        View.VISIBLE.let { visible ->
+                            flashOn.visibility = visible
+                            flashOff.visibility = visible
+                        }
+                        flashOn.setOnClickListener { _ ->
+                            airQr?.changeFlashState(false)
 
-                            }
-                            flashOff.setOnClickListener { _ ->
-                                it.changeFlashState(true)
-                            }
-                        } else {
-                            View.GONE.let { gone ->
-                                flashOn.visibility = gone
-                                flashOff.visibility = gone
-                            }
                         }
-                    },
-                    onFlashStateChanged = {
-                        with(binding) {
-                            if (it) {
-                                flashOn.visibility = View.VISIBLE
-                                flashOff.visibility = View.GONE
-                            } else {
-                                flashOn.visibility = View.GONE
-                                flashOff.visibility = View.VISIBLE
-                            }
+                        flashOff.setOnClickListener { _ ->
+                            airQr?.changeFlashState(true)
                         }
-                    },
-                    onDetection = { string ->
-                        if (string == "https://www.kaspersky.com") {
-                            startActivity(
-                                Intent(
-                                    this@MainActivity,
-                                    QrScanResultActivity::class.java
-                                ).putExtra(
-                                    QrScanResultActivity.extra,
-                                    string
-                                )
-                            )
-                            true
-                        } else {
-                            false
+                    } else {
+                        View.GONE.let { gone ->
+                            flashOn.visibility = gone
+                            flashOff.visibility = gone
                         }
-                    },
-                    onError = {
-                        // todo ignore
-                        // as this does not stop the lib from analyzing the next frame
-                    },
-                    onPermissionsNotGranted = {
-                        Toast.makeText(
-                            this@MainActivity,
-                            "Permissions Denied",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        finish()
-                    },
-                    onException = {
-                        Toast.makeText(
-                            this@MainActivity,
-                            "Some exception occurred",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        finish()
                     }
-                )
-            }
+                }
+                .onFlashStateChanged {
+                    if (it) {
+                        flashOn.visibility = View.VISIBLE
+                        flashOff.visibility = View.GONE
+                    } else {
+                        flashOn.visibility = View.GONE
+                        flashOff.visibility = View.VISIBLE
+                    }
+                }
+                .onQrCodeDetected { string ->
+                    if (string.isNotEmpty()) {
+                        startActivity(
+                            Intent(
+                                this@MainActivity,
+                                QrScanResultActivity::class.java
+                            ).putExtra(
+                                QrScanResultActivity.extra,
+                                string
+                            )
+                        )
+                        true
+                    } else {
+                        false
+                    }
+                }
+                .onError {
+                    // todo ignore
+                    // as this does not stop the lib from analyzing the next frame
+                }
+                .onPermissionsNotGranted {
+                    // todo
+                }
+                .onException {
+                    // todo
+                }
+                .build()
+                .startScan()
+
+
+            /*airQr = AirQr.Builder()
+                .withAppCompatActivity(this@MainActivity)
+                .withPreviewView(binding.previewView)
+                .onQrCodeDetected { string ->
+                    if (string == "https://www.kaspersky.com") {
+                        startActivity(
+                            Intent(
+                                this@MainActivity,
+                                QrScanResultActivity::class.java
+                            ).putExtra(
+                                QrScanResultActivity.extra,
+                                string
+                            )
+                        )
+                        true
+                    } else {
+                        false
+                    }
+                }
+                .onPermissionsNotGranted {
+                    // todo
+                }
+                .onException {
+                    // todo
+                }
+                .build()*/
         }
     }
 
