@@ -20,25 +20,31 @@ class BitmapHelper {
             onSuccess: ((Bitmap) -> Unit)?,
             onFailure: ((String) -> Unit)?
         ) {
-            val getIntent = Intent(Intent.ACTION_GET_CONTENT)
-            getIntent.type = "image/*"
-            val pickIntent =
-                Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-            pickIntent.type = "image/*"
-            val chooserIntent = Intent.createChooser(getIntent, "Select Image Containing QR Code")
-            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, arrayOf(pickIntent))
-            appCompatActivity.registerForActivityResult(
-                ActivityResultContracts.StartActivityForResult()
-            ) {
-                try {
-                    val imageUri: Uri = it.data?.data ?: Uri.parse("")
-                    val inputStream = appCompatActivity.contentResolver.openInputStream(imageUri)
-                    val bitmap = BitmapFactory.decodeStream(inputStream)
-                    onSuccess?.invoke(bitmap)
-                } catch (e: Exception) {
-                    onFailure?.invoke(e.message ?: "")
-                }
-            }.launch(chooserIntent)
+            try {
+                val getIntent = Intent(Intent.ACTION_GET_CONTENT)
+                getIntent.type = "image/*"
+                val pickIntent =
+                    Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                pickIntent.type = "image/*"
+                val chooserIntent =
+                    Intent.createChooser(getIntent, "Select Image Containing QR Code")
+                chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, arrayOf(pickIntent))
+                appCompatActivity.registerForActivityResult(
+                    ActivityResultContracts.StartActivityForResult()
+                ) {
+                    try {
+                        val imageUri: Uri = it.data?.data ?: Uri.parse("")
+                        val inputStream =
+                            appCompatActivity.contentResolver.openInputStream(imageUri)
+                        val bitmap = BitmapFactory.decodeStream(inputStream)
+                        onSuccess?.invoke(bitmap)
+                    } catch (e: Exception) {
+                        onFailure?.invoke(e.message ?: "")
+                    }
+                }.launch(chooserIntent)
+            } catch (e: Exception) {
+                onFailure?.invoke(e.message ?: "")
+            }
         }
 
         fun getBitmapFromAsset(

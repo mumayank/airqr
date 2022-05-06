@@ -9,7 +9,16 @@ import com.mumayank.airqr.helpers.CameraXHelper
 import com.mumayank.airqr.helpers.PermissionsHelper
 
 @androidx.camera.core.ExperimentalGetImage
-class AirQr {
+class AirQr private constructor(
+    private var appCompatActivity: AppCompatActivity?,
+    private var previewView: PreviewView?,
+    private var onIsFlashHardwareDetected: ((Boolean) -> Unit)?,
+    private var onFlashStateChanged: ((Boolean) -> Unit)?,
+    private var onQrCodeDetected: ((String) -> Boolean)?,
+    private var onError: ((String) -> Unit)?,
+    private var onPermissionsNotGranted: (() -> Unit)?,
+    private var onException: ((Exception) -> Unit)?
+) {
 
     companion object {
         fun analyzeBitmap(
@@ -34,45 +43,66 @@ class AirQr {
     }
 
     private var cameraXHelper: CameraXHelper? = null
-    private var previewView: PreviewView? = null
-    private var onException: ((Exception) -> Unit)? = null
-    private var onPermissionsNotGranted: (() -> Unit)? = null
 
-    /*
-    Note:
-    if a QR code is detected successfully,
-    but you'd like to apply additional checks
-    like if you're interested in only QR codes that have a specific format/ information, etc.
-    then simply return true in onDetection() if the QR code you're interested in is found
-    else return false if you'd like to continue the scanning. QR codes
-     */
-    fun onCreate(
-        appCompatActivity: AppCompatActivity?,
-        previewView: PreviewView?,
-        isFlashHardwareDetected: ((Boolean) -> Unit)? = null,
-        onFlashStateChanged: ((Boolean) -> Unit)? = null,
-        onDetection: ((String) -> Boolean)? = null,
-        onError: ((String) -> Unit)? = null,
-        onPermissionsNotGranted: (() -> Unit)? = null,
-        onException: ((Exception) -> Unit)?
+    data class Builder(
+        private var appCompatActivity: AppCompatActivity? = null,
+        private var previewView: PreviewView? = null,
+        private var onIsFlashHardwareDetected: ((Boolean) -> Unit)? = null,
+        private var onFlashStateChanged: ((Boolean) -> Unit)? = null,
+        private var onQrCodeDetected: ((String) -> Boolean)? = null,
+        private var onError: ((String) -> Unit)? = null,
+        private var onPermissionsNotGranted: (() -> Unit)? = null,
+        private var onException: ((Exception) -> Unit)? = null
     ) {
+        fun withAppCompatActivity(appCompatActivity: AppCompatActivity) =
+            apply { this.appCompatActivity = appCompatActivity }
+
+        fun withPreviewView(previewView: PreviewView) = apply { this.previewView = previewView }
+        fun onIsFlashHardwareDetected(onIsFlashHardwareDetected: ((Boolean) -> Unit)?) =
+            apply { this.onIsFlashHardwareDetected = onIsFlashHardwareDetected }
+
+        fun onFlashStateChanged(onFlashStateChanged: ((Boolean) -> Unit)?) =
+            apply { this.onFlashStateChanged = onFlashStateChanged }
+
+        fun onQrCodeDetected(onQrCodeDetected: ((String) -> Boolean)?) =
+            apply { this.onQrCodeDetected = onQrCodeDetected }
+
+        fun onError(onError: ((String) -> Unit)?) = apply { this.onError = onError }
+        fun onPermissionsNotGranted(onPermissionsNotGranted: (() -> Unit)?) =
+            apply { this.onPermissionsNotGranted = onPermissionsNotGranted }
+
+        fun onException(onException: ((Exception) -> Unit)?) =
+            apply { this.onException = onException }
+
+        fun build(): AirQr = AirQr(
+            appCompatActivity,
+            previewView,
+            onIsFlashHardwareDetected,
+            onFlashStateChanged,
+            onQrCodeDetected,
+            onError,
+            onPermissionsNotGranted,
+            onException
+        )
+    }
+
+    fun startScan(): AirQr {
         appCompatActivity?.let {
-            this.previewView = previewView
-            this.onException = onException
-            this.onPermissionsNotGranted = onPermissionsNotGranted
             cameraXHelper = CameraXHelper()
             cameraXHelper?.let { cxHelper ->
                 cxHelper.onCreate(
-                    isFlashHardwareDetected,
+                    onIsFlashHardwareDetected,
                     onFlashStateChanged,
                     onNextProxyImageAvailableForAnalysis = { imageProxy ->
                         BarcodeScannerHelper.analyze(
                             imageProxy,
                             onError = { error ->
+                                imageProxy.close()
                                 onError?.invoke(error)
                             },
                             onDetection = { string ->
-                                if (onDetection?.invoke(string) == true) {
+                                imageProxy.close()
+                                if (onQrCodeDetected?.invoke(string) == true) {
                                     onPause()
                                 }
                             }
@@ -84,6 +114,7 @@ class AirQr {
                 }
             }
         }
+        return this
     }
 
     fun changeFlashState(turnOn: Boolean) {

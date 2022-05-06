@@ -31,11 +31,9 @@ class BarcodeScannerHelper {
                 analyze(
                     inputImage,
                     onError = fun(string: String) {
-                        imageProxy.close()
                         onError?.invoke(string)
                     },
                     onDetection = fun(string: String) {
-                        imageProxy.close()
                         onDetection?.invoke(string)
                     }
                 )
@@ -79,6 +77,10 @@ class BarcodeScannerHelper {
                     .getClient(BarcodeScannerOptions.Builder().build())
                     .process(inputImage)
                     .addOnSuccessListener { barcodes ->
+                        if (barcodes.size == 0) {
+                            onError?.invoke("No barcode detected")
+                            return@addOnSuccessListener
+                        }
                         for (barcode in barcodes) {
                             barcode.rawValue?.let { string ->
                                 onDetection?.invoke(string)
