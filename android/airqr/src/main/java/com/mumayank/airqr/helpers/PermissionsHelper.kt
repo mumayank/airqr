@@ -15,7 +15,7 @@ class PermissionsHelper {
         private var onGranted: (() -> Unit)? = null
 
         fun onCreate(
-            activity: Activity,
+            context: Context,
             permissions: Array<String>,
             onNotGranted: (() -> Unit)?,
             onGranted: (() -> Unit)?
@@ -23,11 +23,11 @@ class PermissionsHelper {
             Companion.onNotGranted = onNotGranted
             Companion.permissions = permissions
             Companion.onGranted = onGranted
-            if (areAllPermissionsGranted(activity)) {
+            if (areAllPermissionsGranted(context)) {
                 onGranted?.invoke()
             } else {
                 ActivityCompat.requestPermissions(
-                    activity, permissions, requestCode
+                    context as Activity, permissions, requestCode
                 )
             }
         }
