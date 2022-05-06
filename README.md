@@ -13,7 +13,9 @@ Wrapper that provides helper functions which help you include QR-code reading fu
 - Provides additional optional callback methods so that devs can take care of the flow `on error`, `exception`, `permission denied`, etc. as per their app flow.
 - Covers `releasing` camera resources properly `onPause()`, reclaiming them `onResume()`, closing `proxyImage` when detection is done. Takes care of backpressure.
 - Uses `Jetpack's CameraX library` and `Google's ML Kit` internally - so you're in safe hands!
-- Bonus: Provides a static helper method to detect QR code from Bitmap
+- Bonus: 
+	- Provides a static helper method to detect QR code from Bitmap
+	- Supports Jetpack Compose
 
 ## Demo
 https://user-images.githubusercontent.com/8118918/162677144-e592fc47-a18c-4be8-a586-2cfd7d14d906.mp4
@@ -40,44 +42,102 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+    // OPTIONAL - IF USING JETPACK COMPOSE
+    buildFeatures {
+        compose true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion compose_version
+    }
 }
 dependencies {
     // ADD THESE
-    implementation "androidx.camera:camera-core:CAMERA_X_CORE_VERSOIN"
-    implementation "androidx.camera:camera-view:CAMERA_X_VIEW_VERSOIN"
+    // airqr
     implementation "com.github.mumayank:airqr:AIR_QR_VERSION"
+    // jetpack cameraX
+    implementation "androidx.camera:camera-core:+"
+    implementation "androidx.camera:camera-view:+"
+    implementation "androidx.camera:camera-camera2:+"
+    implementation "androidx.camera:camera-lifecycle:+"
+    // jetpack compose
+    implementation "androidx.compose.ui:ui:+"
+    implementation "androidx.compose.ui:ui-tooling-preview:+"
+    implementation "androidx.compose.material:material:+"
+    debugImplementation "androidx.compose.ui:ui-tooling:+"
+    implementation 'androidx.activity:activity-compose:+'
+    implementation "com.google.android.material:compose-theme-adapter:+"
 }
 ```
-where `CAMERA_X_CORE_VERSOIN` and `CAMERA_X_VIEW_VERSOIN` can be found [here](https://developer.android.com/jetpack/androidx/releases/camera)
 
-and `AIR_QR_VERSION` is [![](https://jitpack.io/v/mumayank/airqr.svg)](https://jitpack.io/#mumayank/airqr)
+where `AIR_QR_VERSION` is [![](https://jitpack.io/v/mumayank/airqr.svg)](https://jitpack.io/#mumayank/airqr)
 
-To add a previewView in your layout
+and latest version of other dependencies should be suggested automatically by Android Studio, or can also be found at their respective official websites.
 
-#### Option 1: Jetpack Compose
+## The Jetpack Compose Way
 
 ```kotlin
-PreviewView(context).apply {
-    setBackgroundColor(Color.GREEN)
-    layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
-    scaleType = PreviewView.ScaleType.FILL_START
-    implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-    post {
-        cameraProviderFuture.addListener(Runnable {
-            val cameraProvider = cameraProviderFuture.get()
-            bindPreview(
-                cameraProvider,
-                lifecycleOwner,
-                this,
-            )
-        }, ContextCompat.getMainExecutor(context))
+var previewView: PreviewView? = null // ADD THIS
+
+@androidx.camera.core.ExperimentalGetImage // ADD THIS
+class ComposeExampleActivity : ComponentActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        previewView = PreviewView(this) // ADD THIS
+        setContent {
+            Content()
+            // ADD THIS
+            AirQr.Builder()
+                .withContext(LocalContext.current)
+                .withLifecycleOwner(LocalLifecycleOwner.current)
+                .withPreviewView(previewView!!)
+                .onError {
+                    // can ignore as this means error only in processing the current frame
+                }
+                .onPermissionsNotGranted {
+                    // cannot proceed, show some error
+                }
+                .onException {
+                    // cannot proceed, show some error
+                }
+               .onQrCodeDetected { string, shouldStopScanning ->
+                    if (string.isNotEmpty()) { // your logic to confirm this is the QR code you are interested in
+                        shouldStopScanning?.invoke() // call this method to inform the library to stop
+                        // your regular flow continues from here
+                    }
+                }
+                .build()
+                .startScan() // you could choose to stop at .build() and call airQr?.startScan() a little later too
+        }
     }
 }
+
+// ADD THIS
+@Preview
+@Composable
+fun Content() {
+    AirQrAndroidProjectTheme {
+        Surface(
+            modifier = Modifier
+                .fillMaxSize(),
+            color = MaterialTheme.colors.background
+        ) {
+            AndroidView(factory = { previewView!! }, modifier = Modifier.fillMaxSize()) // this creates a cameraX previewView
+        }
+    }
+}
+
 ```
 
-#### Option 2: Add view in xml
-
-In your layout file `xml`
+## The View Binding Way
 
 ```xml
 <androidx.constraintlayout.widget.ConstraintLayout>
@@ -97,45 +157,47 @@ In your layout file `xml`
 </androidx.constraintlayout.widget.ConstraintLayout>
 ```
 
-## Use
-
-Call the helper methods in your activity:
 ```kotlin
-@androidx.camera.core.ExperimentalGetImage
-class MainActivity : AppCompatActivity() {
+@androidx.camera.core.ExperimentalGetImage // ADD THIS
+class BindingExampleActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityBindingExampleBinding
+    private var airQr: AirQr? = null // ADD THIS
 
-    private var airQr: AirQr? = null                                            // ADD THIS
-  
     override fun onCreate(savedInstanceState: Bundle?) {
-        .
-        .
-        // ADD THIS
-        airQr = AirQr.Builder()
-                .withAppCompatActivity(this)
+        super.onCreate(savedInstanceState)
+        binding = ActivityBindingExampleBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        with(binding) {
+            // ADD THIS
+            airQr = AirQr.Builder()
+                .withContext(this@BindingExampleActivity)
+                .withLifecycleOwner(this@BindingExampleActivity)
                 .withPreviewView(binding.previewView)
-                .onQrCodeDetected { string ->
-                    // qr code is successfully detected containing string
-                    // analyse the string and return true if this is the correct qr
-                    // else return false to continue scanning
-                }
                 .onIsFlashHardwareDetected { isDetected ->
-                    // optional - informs if flash hardware is present in the device - can show/hide flash icons on the screen
+                    // can do something like changing visibility of flash icon
                 }
                 .onFlashStateChanged {
-                    // optional - flash state has changed from on to off, can do something like changing the icon
+                    // can do something like changing icon of flash imageview to show current state
                 }
                 .onError {
-                    // optional
-                    // can ignore as this does not stop the lib from analyzing the next frame
+                    // can ignore as this means error only in processing the current frame
                 }
                 .onPermissionsNotGranted {
-                    // cannot proceed further due to permissions not provided. show some error to the user
+                    // cannot proceed, show some error
                 }
                 .onException {
-                    // some exception happened at google vision API level, cannot proceed further. show some error to the user
+                    // cannot proceed, show some error
+                }
+                .onQrCodeDetected { string, shouldStopScanning ->
+                    if (string.isNotEmpty()) { // your logic to confirm this is the QR code you are interested in
+                        shouldStopScanning?.invoke() // call this method to inform the library to stop
+                       // your regular flow continues from here
+                    }
                 }
                 .build()
-                .startScan() // you can also stop at build() to get airQr instance, and later use startScan() to begin scanning - depending on your app flow
+                .startScan()
+        }
     }
 
     override fun onRequestPermissionsResult(
@@ -144,17 +206,7 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        airQr?.onRequestPermissionsResult(this, requestCode)                    // ADD THIS
-    }
-
-    override fun onResume() {
-        super.onResume()
-        airQr?.onResume(this)                                                   // ADD THIS
-    }
-
-    override fun onPause() {
-        airQr?.onPause()                                                        // ADD THIS
-        super.onPause()
+        airQr?.onRequestPermissionsResult(this, requestCode) // ADD THIS
     }
 
 }
@@ -162,7 +214,7 @@ class MainActivity : AppCompatActivity() {
 
 ## Bonus
 
-The library offers a static helper function to analyze any bitmap for QR code:
+Analyze any bitmap for QR code:
 
 ```kotlin
 AirQr.analyzeBitmap(
@@ -176,7 +228,7 @@ AirQr.analyzeBitmap(
 )
 ```
 
-Additionally, the library also offers another static helper function to get bitmap from image file in project's assets folder:
+Get bitmap from image file in project's assets folder:
 
 ```kotlin
 BitmapHelper.getBitmapFromAsset(
@@ -191,7 +243,7 @@ BitmapHelper.getBitmapFromAsset(
 )
 ```
 
-The library also provides a static helper function to help choose images from user's device (using explorer app/ other photos app installed on user's device)
+Choose image from user's device (using explorer app/ other photos app installed on user's device)
 
 ```kotlin
 BitmapHelper.getBitmapFromGallery(
@@ -205,6 +257,10 @@ BitmapHelper.getBitmapFromGallery(
 )
 ```
 
-Please do checkout the [wiki](https://github.com/mumayank/airqr/wiki) too!
+That's all! 
 
-That's all! In case you face issues, or have suggestions, feel free to use the [issues](https://github.com/mumayank/airqr/issues) tab. Maybe the issue is already addressed. And of course, PRs are welcomed. Feel free to contribute and make the project better :)
+In case you face issues, or have suggestions, feel free to use the [issues](https://github.com/mumayank/airqr/issues) tab. (Maybe the issue is already addressed)
+
+And of course, PRs are welcomed. Feel free to contribute and make the project better :)
+
+Please do checkout the [wiki](https://github.com/mumayank/airqr/wiki) too!

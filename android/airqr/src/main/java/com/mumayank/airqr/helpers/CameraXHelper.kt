@@ -1,12 +1,13 @@
 package com.mumayank.airqr.helpers
 
 import android.Manifest
-import androidx.appcompat.app.AppCompatActivity
+import android.content.Context
 import androidx.camera.core.*
 import androidx.camera.core.ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleOwner
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -25,7 +26,7 @@ class CameraXHelper {
 
     private var cameraExecutorService: ExecutorService? = null
     private var cameraControl: CameraControl? = null
-
+    private var cameraInfo: CameraInfo? = null
 
     fun onCreate(
         isFlashHardwareDetected: ((Boolean) -> Unit)?,
@@ -38,59 +39,66 @@ class CameraXHelper {
     }
 
     fun onResume(
-        appCompatActivity: AppCompatActivity?,
+        contextNullable: Context?,
+        lifecycleOwnerNullable: LifecycleOwner?,
         previewView: PreviewView?,
         onException: ((Exception) -> Unit)?
     ) {
-        appCompatActivity?.let { activity ->
-            previewView?.let { view ->
-                cameraExecutorService = Executors.newSingleThreadExecutor()
-                val cameraProviderFuture = ProcessCameraProvider.getInstance(activity)
-                cameraProviderFuture.addListener({
-                    val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-                    try {
-                        cameraProvider.unbindAll()
-                        val camera = cameraProvider.bindToLifecycle(
-                            activity,
-                            CameraSelector.DEFAULT_BACK_CAMERA,
-                            Preview.Builder()
-                                .build()
-                                .also {
-                                    it.setSurfaceProvider(view.surfaceProvider)
-                                },
-                            cameraExecutorService?.let {
-                                ImageAnalysis.Builder()
-                                    .setBackpressureStrategy(STRATEGY_KEEP_ONLY_LATEST)
+        contextNullable?.let { context ->
+            lifecycleOwnerNullable?.let { lifecycleOwner ->
+                previewView?.let { view ->
+                    cameraExecutorService = Executors.newSingleThreadExecutor()
+                    val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+                    cameraProviderFuture.addListener({
+                        val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+                        try {
+                            cameraProvider.unbindAll()
+                            val camera = cameraProvider.bindToLifecycle(
+                                lifecycleOwner,
+                                CameraSelector.DEFAULT_BACK_CAMERA,
+                                Preview.Builder()
                                     .build()
                                     .also {
-                                        it.setAnalyzer(
-                                            cameraExecutorService as ExecutorService
-                                        ) { imageProxy ->
-                                            onNextProxyImageAvailableForAnalysis?.invoke(imageProxy)
+                                        it.setSurfaceProvider(view.surfaceProvider)
+                                    },
+                                cameraExecutorService?.let {
+                                    ImageAnalysis.Builder()
+                                        .setBackpressureStrategy(STRATEGY_KEEP_ONLY_LATEST)
+                                        .build()
+                                        .also {
+                                            it.setAnalyzer(
+                                                cameraExecutorService as ExecutorService
+                                            ) { imageProxy ->
+                                                onNextProxyImageAvailableForAnalysis?.invoke(
+                                                    imageProxy
+                                                )
+                                            }
+                                        }
+                                }
+                            )
+                            cameraControl = camera.cameraControl
+                            cameraInfo = camera.cameraInfo
+                            cameraInfo?.let {
+                                if (it.hasFlashUnit()) {
+                                    isFlashHardwareDetected?.invoke(true)
+                                    it.torchState.observe(lifecycleOwner) { torchState ->
+                                        if (torchState == TorchState.ON) {
+                                            onFlashStateChanged?.invoke(true)
+                                        } else {
+                                            onFlashStateChanged?.invoke(false)
                                         }
                                     }
-                            }
-                        )
-                        cameraControl = camera.cameraControl
-                        val cameraInfo = camera.cameraInfo
-                        if (cameraInfo.hasFlashUnit()) {
-                            isFlashHardwareDetected?.invoke(true)
-                            cameraInfo.torchState.observe(activity) {
-                                if (it == TorchState.ON) {
-                                    onFlashStateChanged?.invoke(true)
                                 } else {
-                                    onFlashStateChanged?.invoke(false)
+                                    isFlashHardwareDetected?.invoke(false)
                                 }
                             }
-                        } else {
-                            isFlashHardwareDetected?.invoke(false)
+                        } catch (e: Exception) {
+                            onPause()
+                            onException?.invoke(e)
                         }
-                    } catch (e: Exception) {
-                        onPause()
-                        onException?.invoke(e)
-                    }
 
-                }, ContextCompat.getMainExecutor(activity))
+                    }, ContextCompat.getMainExecutor(context))
+                }
             }
         }
     }
@@ -103,6 +111,10 @@ class CameraXHelper {
         turnOn: Boolean
     ) {
         cameraControl?.enableTorch(turnOn)
+    }
+
+    fun toggleFlashState() {
+        cameraControl?.enableTorch(cameraInfo?.torchState?.value == TorchState.OFF)
     }
 
 }
