@@ -1,5 +1,6 @@
 package com.mumayank.airqr.helpers
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -15,6 +16,7 @@ import java.io.InputStream
 class BitmapHelper {
     companion object {
 
+        @SuppressLint("IntentReset")
         fun getBitmapFromGallery(
             appCompatActivity: AppCompatActivity,
             onSuccess: ((Bitmap) -> Unit)?,
