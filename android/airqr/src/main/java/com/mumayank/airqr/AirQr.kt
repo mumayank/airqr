@@ -201,7 +201,7 @@ class AirQr private constructor(
         }
     }
 
-    private fun onResume() {
+    fun onResume() {
         isStopRequested = false
         onCameraXHelperResume()
     }
@@ -217,7 +217,7 @@ class AirQr private constructor(
         }
     }
 
-    private fun onPause() {
+    fun onPause() {
         cameraXHelper?.onPause()
     }
 
