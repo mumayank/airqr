@@ -5,11 +5,11 @@ plugins {
     id 'maven-publish'
 }
 android {
-    compileSdk 32
+    compileSdk 34
 
     defaultConfig {
         minSdk 21
-        targetSdk 32
+        targetSdk 34
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -32,44 +32,51 @@ android {
         compose true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion '1.1.1'
+        kotlinCompilerExtensionVersion '1.5.8'
     }
     packagingOptions {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
     }
+    namespace 'com.mumayank.airqr'
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.8.0'
-    implementation 'androidx.appcompat:appcompat:1.4.2'
-    implementation 'com.google.android.material:material:1.6.1'
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    // androidx
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
 
     // jetpack compose
-    implementation "androidx.compose.ui:ui:1.3.0-alpha02"
-    implementation "androidx.compose.material:material:1.3.0-alpha02"
-    androidTestImplementation "androidx.compose.ui:ui-test-junit4:1.2.0"
-    debugImplementation "androidx.compose.ui:ui-tooling:1.2.0"
-    implementation 'androidx.activity:activity-compose:1.5.1'
+    implementation 'androidx.compose.ui:ui:1.5.4'
+    implementation 'androidx.compose.material:material:1.5.4'
+    androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.5.4'
+    debugImplementation 'androidx.compose.ui:ui-tooling:1.5.4'
+    implementation 'androidx.activity:activity-compose:1.8.2'
+
     // When using a MDC theme
-    implementation "com.google.android.material:compose-theme-adapter:1.1.15"
+    implementation 'com.google.android.material:compose-theme-adapter:1.2.1'
+
     // When using a AppCompat theme
-    implementation "com.google.accompanist:accompanist-appcompat-theme:0.16.0"
-    implementation "androidx.compose.material:material-icons-extended:1.2.0"
-    implementation "com.google.accompanist:accompanist-permissions:0.24.7-alpha"
+    implementation 'com.google.accompanist:accompanist-appcompat-theme:0.32.0'
+    implementation 'androidx.compose.material:material-icons-extended:1.5.4'
+    implementation 'com.google.accompanist:accompanist-permissions:0.32.0'
 
     // jetpack cameraX
-    def camerax_version = "1.2.0-alpha04"
+    def camerax_version = '1.3.1'
     api "androidx.camera:camera-core:${camerax_version}"
     api "androidx.camera:camera-lifecycle:${camerax_version}"
     api "androidx.camera:camera-view:${camerax_version}"
     api "androidx.camera:camera-extensions:${camerax_version}"
+
     // google ml kit barcode scanning
-    api 'com.google.mlkit:barcode-scanning:17.0.2'
+    api 'com.google.mlkit:barcode-scanning:17.2.0'
+
+    // test
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
 
 afterEvaluate {
